@@ -1,0 +1,12 @@
+{
+    "VOLUME": 1.0,
+    "keys": {
+        "UP": 119,
+        "LEFT": 97,
+        "RIGHT": 100,
+        "DOWN": 115,
+        "SHOOT": 32,
+        "BOMB": 98
+    },
+    "FULLSCREEN": false
+}
