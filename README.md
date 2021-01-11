@@ -4,3 +4,6 @@
 
 # Libraries
 You will need pygame installed. pygame 2.0.1 works, and older versions may work as well.
+
+# Warning
+The audio will be loud when first starting the game.
