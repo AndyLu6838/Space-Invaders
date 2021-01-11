@@ -58,6 +58,7 @@ class BaseEnemy(pygame.sprite.DirtySprite):
             self.hit_timer = 0
             if self.health <= 0:
                 self.kill()
+                settings.sounds["effects"]["explode"].play()
                 for p in player_group:
                     p.score += self.score
                     powerups = ["heart", "speed", "firerate", "count", "spread", "invuln"]

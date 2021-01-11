@@ -13,7 +13,7 @@ DISPLAY_HEIGHT = UPPER_BOUND-LOWER_BOUND
 
 SCREEN_RECT = pygame.Rect(0, 0, WIDTH, HEIGHT)
 FULLSCREEN = False
-LOW_DETAIL_MODE = True&False
+LOW_DETAIL_MODE = False
 FPS = 60
 DELTA_T = 1 / FPS
 VOLUME = 1.00
@@ -42,7 +42,20 @@ defaults = dict((("VOLUME", 1.00),
                      "BOMB": pygame.K_b
                  }),
                  ("FULLSCREEN", False)))
-
+sounds = {
+    "music": {
+        "menu_music": pygame.mixer.Sound(file="assets/sound/menu_music.wav"),
+        "easy_level_music": pygame.mixer.Sound(file="assets/sound/extreme_level_music.wav"),
+        "medium_level_music": pygame.mixer.Sound(file="assets/sound/extreme_level_music.wav"),
+        "hard_level_music": pygame.mixer.Sound(file="assets/sound/extreme_level_music.wav"),
+        "extreme_level_music": pygame.mixer.Sound(file="assets/sound/extreme_level_music.wav")
+    },
+    "effects": {
+        "shoot": pygame.mixer.Sound(file="assets/sound/rocket_shoot.wav"),
+        "explode": pygame.mixer.Sound(file="assets/sound/rocket_directhit_explode3.wav"),
+        "get_item": pygame.mixer.Sound(file="assets/sound/recharged.wav")
+    }
+}
 
 def init():
     global VOLUME, keys, FULLSCREEN
@@ -61,6 +74,9 @@ def init():
         VOLUME = startup["VOLUME"]
         keys = startup["keys"]
         FULLSCREEN = startup["FULLSCREEN"]
+        for key in sounds:
+            for key2 in sounds[key]:
+                sounds[key][key2].set_volume(VOLUME)
 
     f.close()
 

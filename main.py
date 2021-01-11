@@ -12,6 +12,7 @@ from player import Player, SpriteGlow
 next_spawn = 0
 
 pygame.init()
+pygame.mixer.init()
 
 enemy_ims = {"enemy1": utils.load_image("assets/images/alien1.png", 48)}
 enemy_proj_ims = {"proj1": utils.load_image("assets/images/proj1.png", 16)}
@@ -323,7 +324,7 @@ def play():
 
     #load_enemy(enemy_group, enemy_glow_group)
     while not done:
-        print(powerup_group)
+        #print(powerup_group)
         settings.clock.tick(settings.FPS)
         settings.TIMER += settings.DELTA_T * 1000
         # every 10 seconds s, the difficulty increases
@@ -394,6 +395,7 @@ def play():
 
         if p.health <= 0:
             done = True
+
         # check for player collision, important to put this after updating player
         # TODO: make into a subroutine?
         if p.is_hit():
@@ -403,6 +405,7 @@ def play():
             update_rects += blit_ui(p, update_all=False, update_score=True)
         coll = pygame.sprite.spritecollide(p, powerup_group, True)
         for powerup in coll:
+            settings.sounds["effects"]["get_item"].play()
             if powerup.powerup_type == "heart":
                 p.health += 1
                 #update_rects += blit_ui(p, update_all=False, update_lives=True)
@@ -449,6 +452,48 @@ def play():
         # settings.wn.fill((0,0,0))
         update_rects = []
 
+    game_over()
+
+
+def game_over():
+    pygame.mixer.stop()
+    settings.wn.fill((0,0,0))
+    game_over_rect = pygame.Rect(utils.centre_offset(settings.SCREEN_RECT, (0, 0, settings.DISPLAY_WIDTH//2, settings.DISPLAY_HEIGHT//2)), (settings.DISPLAY_WIDTH//2, settings.DISPLAY_HEIGHT//2))
+    pygame.draw.rect(settings.wn, (127, 127, 127), game_over_rect)
+    done = False
+    font = pygame.font.SysFont("Arial", 64)
+    game_over_text = font.render("Game Over", True, (255, 255, 255))
+    score_text = pygame.font.SysFont("Arial", 48).render(f"Score: {settings.SCORE}", True, (255, 255, 255))
+    restart_button = BorderButton(pygame.Rect(game_over_rect.x+20, game_over_rect.bottom-80, 150, 60), (0, 128, 0),
+                                  (0, 192, 0), "restart", 28, (255, 255, 255), 2, None)
+    exit_to_menu_button = BorderButton(pygame.Rect(game_over_rect.right-170, game_over_rect.bottom-80, 150, 60), (128, 0, 0),
+                                  (192, 0, 0), "Exit to Menu", 28, (255, 255, 255), 2, None)
+    while not done:
+        settings.clock.tick(settings.FPS)
+        pygame.draw.rect(settings.wn, (127, 127, 127), game_over_rect)
+        restart_button.update()
+        restart_button.draw(settings.wn)
+        exit_to_menu_button.update()
+        exit_to_menu_button.draw(settings.wn)
+        settings.wn.blit(game_over_text, (utils.x_offset(game_over_rect, game_over_text.get_size()[0]), game_over_rect.y+20))
+        settings.wn.blit(score_text, (utils.x_offset(game_over_rect, score_text.get_size()[0]), game_over_rect.y+120))
+        if restart_button.is_hovering() and pygame.mouse.get_pressed()[0]:
+            done = True
+            settings.wn.fill((0, 0, 0))
+            settings.LEVEL = 0
+            settings.SCORE = 0
+            settings.TIMER = 0
+        elif exit_to_menu_button.is_hovering() and pygame.mouse.get_pressed()[0]:
+            settings.LEVEL = 0
+            settings.SCORE = 0
+            settings.TIMER = 0
+            menu()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+        pygame.display.flip()
+
 
 def settings_menu():
     """
@@ -482,6 +527,7 @@ def settings_menu():
 
             for event2 in pygame.event.get():
                 if event2.type == pygame.QUIT:
+
                     pygame.quit()
                     exit()
             button.draw(settings.wn)
@@ -491,6 +537,9 @@ def settings_menu():
         button.text = "Saved!"
         res = dict((("VOLUME", volume), ("keys", keys), ("FULLSCREEN", fullscreen)))
         settings.change_settings(res)
+        for key10 in settings.sounds:
+            for key20 in settings.sounds[key10]:
+                settings.sounds[key10][key20].set_volume(settings.VOLUME)
 
     settings_rect = pygame.Rect(utils.x_offset(settings.SCREEN_RECT, pygame.Rect(0, 0, 400, 100)),
                                 25, 400, 100)
@@ -751,20 +800,70 @@ def difficulty_menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if easy_button.is_hovering():
                     settings.LIVES = 5
+                    pygame.mixer.stop()
+                    settings.sounds["music"]["easy_level_music"].play(loops=-1)
                     play()
                 elif medium_button.is_hovering():
                     settings.LIVES = 3
+                    pygame.mixer.stop()
+                    settings.sounds["music"]["medium_level_music"].play(loops=-1)
                     play()
                 elif hard_button.is_hovering():
                     settings.LIVES = 2
+                    pygame.mixer.stop()
+                    settings.sounds["music"]["hard_level_music"].play(loops=-1)
                     play()
                 elif extreme_button.is_hovering():
                     settings.LIVES = 1
+                    pygame.mixer.stop()
+                    settings.sounds["music"]["extreme_level_music"].play(loops=-1)
                     play()
 
         pygame.display.update(update_rects)
         update_rects = []
 
+
+def how_to_play():
+    settings.wn.fill((0, 0, 0))
+    header_font = pygame.font.SysFont("Arial", 70)
+    body_font = pygame.font.SysFont("Arial", 28)
+    how_to_play_text = header_font.render("How to Play", True, (255, 255, 255))
+    settings.wn.blit(how_to_play_text, (utils.x_offset(settings.SCREEN_RECT, how_to_play_text.get_size()[0]), 100))
+    body_text = []
+    body_text.append(body_font.render(f"Press {pygame.key.name(settings.keys['UP'])} to move up, "
+                                      f"press {pygame.key.name(settings.keys['LEFT'])} to move left, "
+                                      f"press {pygame.key.name(settings.keys['DOWN'])} to move down, "
+                                      f"and press {pygame.key.name(settings.keys['RIGHT'])} to move right.",
+                                      True, (255, 255, 255)))
+    body_text.append(body_font.render(f"Press {pygame.key.name(settings.keys['SHOOT'])} to fire a projectile.",
+                                      True, (255, 255, 255)))
+    body_text.append(body_font.render(f"Press {pygame.key.name(settings.keys['BOMB'])} to clear all enemy projectiles. "
+                                      f"There is a cooldown of 10 seconds between each use.", True, (255, 255, 255)))
+    body_text.append(body_font.render(f"Killing an enemy grants score and has a chance to drop a powerup.",
+                                      True, (255, 255, 255)))
+    back_to_menu_rect = pygame.Rect(settings.WIDTH-300, 100, 200, 100)
+    back_to_menu_button = Button(back_to_menu_rect,
+                                 (0, 0, 127), (0, 0, 192), "Back To Menu", 28, (255, 255, 255), None)
+    for i, text in enumerate(body_text):
+        settings.wn.blit(text, (50, 300+body_font.get_height()*i))
+    pygame.display.flip()
+    while True:
+        back_to_menu_button.update()
+        back_to_menu_button.draw(settings.wn)
+        settings.clock.tick(settings.FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_to_menu_button.is_hovering():
+                    settings.wn.fill((0, 0, 0))
+                    myfont = pygame.font.SysFont("Arial", 70)
+                    title_font = myfont.render("Space Game", True, (255, 255, 255))
+                    title_rect = pygame.Rect((0, 0), myfont.size("Space Game"))
+                    settings.wn.blit(title_font, (utils.x_offset(settings.SCREEN_RECT, title_rect), 100))
+                    pygame.display.flip()
+                    return
+        pygame.display.update(back_to_menu_rect)
 
 def menu():
     settings.init()
@@ -785,6 +884,11 @@ def menu():
                           "Play", 40, (255, 255, 255), difficulty_menu))
     buttons.append(Button(pygame.Rect(b_x, 500, b_width, b_height), (127, 127, 127), (192, 192, 192),
                           "Settings", 40, (255, 255, 255), settings_menu))
+    buttons.append(Button(pygame.Rect(b_x, 700, b_width, b_height), (127, 127, 0), (192, 192, 0),
+                          "How to Play", 40, (255, 255, 255), how_to_play))
+
+    pygame.mixer.stop()
+    settings.sounds["music"]["menu_music"].play(loops=-1)
     for button in buttons:
         button.draw(settings.wn)
         update_rects.append(button.rect)

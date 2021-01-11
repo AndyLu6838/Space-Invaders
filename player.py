@@ -139,6 +139,7 @@ class Player(pygame.sprite.DirtySprite):
 
         if keys[settings.keys["SHOOT"]]:
             if self.timer > self.fire_delay:
+                settings.sounds["effects"]["shoot"].play()
                 self.fire(projectiles_group)
                 self.timer = 0
             self.dirty = 1
